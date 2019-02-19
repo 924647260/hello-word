@@ -13,6 +13,19 @@ rabbitmqctl stop_app
 
 brew services start rabbitmq
 
+rabbitmq-server -detached  启动RabbitMQ节点
+rabbitmqctl start_app 启动RabbitMQ应用，而不是节点
+rabbitmqctl stop_app  停止
+rabbitmqctl status  查看状态
+rabbitmqctl add_user mq 123456
+rabbitmqctl set_user_tags mq administrator 新增账户
+rabbitmq-plugins enable rabbitmq_management  启用RabbitMQ_Management
+rabbitmqctl cluster_status 集群状态
+
+rabbitmqctl forget_cluster_node rabbit@rabbit3 节点摘除
+
+rabbitmqctl reset application重置 
+
 
 
 # Windows下内建RabbitMQ
@@ -88,3 +101,58 @@ rabbitmqctl-ClusterNode1 start_app
 rabbitmqctl cluster_status
 ~~~
 
+
+
+# 分布式机器上的集群
+
+1. **安装Erlang和RabbitMQ**
+
+**Erlang的安装**
+
+yum install epel-release
+rpm -ivh https://download1.rpmfusion.org/free/el/updates/6/i386/rpmfusion-free-release-6-1.noarch.rpm
+
+sudo yum install erlang
+
+erl -v
+
+**RabbitMQ的安装(3.7.4版本)**
+
+rpm --import https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc
+
+rpm -ivh https://bintray.com/rabbitmq/rabbitmq-server-rpm/download_file?file_path=rabbitmq-server-3.7.4-1.el7.noarch.rpm 
+
+yum install socat
+
+- **启动RabbitMQ**
+
+rabbitmq-server -detached  或者 rabbitmq-server start
+
+- **RabbitMQ-Management安装**
+
+rabbitmq-plugins enable rabbitmq_management
+
+**集群**
+
+- **群节点(对等)通信---erlang Cookie**
+
+erlang分布式的每个节点上要保持相同的.erlang.cookie文件，文件路径：/var/lib/rabbitmq/.erlang.cookie
+
+- **将rabbit2加入到rabbit1（RAM节点，默认Disk节点）**
+
+rabbitmqctl stop_app
+rabbitmqctl join_cluster rabbit@rabbit1 <span style="background-color:rgb(255,204,0);">--ram</span>
+
+rabbitmqctl start_app
+
+- **将rabbit3加入到rabbit1(Disk节点)**
+
+rabbitmqctl stop_app
+rabbitmqctl join_cluster rabbit@rabbit1
+rabbitmqctl start_app
+
+**PS:若希望修改节点类型，则(需要先Stop)**
+
+rabbitmqctl stop_app
+rabbitmqctl change_cluster_node_type ram
+rabbitmqctl start_app
